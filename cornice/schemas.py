@@ -105,9 +105,21 @@ def validate_colander_schema(schema, request):
                     if deserialized is not drop:
                         request.validated[attr.name] = deserialized
 
+    def _validate_custom_temp(data):
+        if not request.errors:
+
+            try:
+                schema._c_schema.deserialize(request.validated)
+            except Invalid as e:
+                # the struct is invalid
+                request.errors.add('custom', 'custom',
+                                   'Values failed custom validator(s).')
+
     qs, headers, body, path = extract_request_data(request)
 
     _validate_fields('path', path)
     _validate_fields('header', headers)
     _validate_fields('body', body)
     _validate_fields('querystring', qs)
+
+    _validate_custom_temp(request.validated)
