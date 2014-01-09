@@ -112,8 +112,7 @@ def validate_colander_schema(schema, request):
                 schema._c_schema.deserialize(request.validated)
             except Invalid as e:
                 # the struct is invalid
-                request.errors.add('custom', 'custom',
-                                   'Values failed custom validator(s).')
+                request.errors.add('', 'custom validators', e.asdict()[''])
 
     qs, headers, body, path = extract_request_data(request)
 
