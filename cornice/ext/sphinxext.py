@@ -8,8 +8,8 @@ Sphinx extension that is able to convert a service into a documentation.
 import sys
 from importlib import import_module
 
-from cornice.util import to_list, is_string
-from cornice.service import get_services
+from cornice.util import to_list, is_string, PY3
+from cornice.service import get_services, clear_services
 
 import docutils
 from docutils import nodes, core
@@ -17,6 +17,7 @@ from docutils.parsers.rst import Directive, directives
 from docutils.writers.html4css1 import Writer, HTMLTranslator
 from sphinx.util.docfields import DocFieldTransformer
 
+MODULES = {}
 
 def convert_to_list(argument):
     """Convert a comma separated list into a list of python values"""
@@ -60,9 +61,15 @@ class ServiceDirective(Directive):
         self.env = self.state.document.settings.env
 
     def run(self):
+        # clear the SERVICES variable, which will allow to use this directive multiple times
+        clear_services()
+
         # import the modules, which will populate the SERVICES variable.
         for module in self.options.get('modules'):
-            import_module(module)
+            if MODULES.has_key(module):
+                reload(MODULES[module])
+            else:
+                MODULES[module] = import_module(module)
 
         names = self.options.get('services', [])
 
@@ -193,14 +200,14 @@ def trim(docstring):
     # and split into a list of lines:
     lines = docstring.expandtabs().splitlines()
     # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
+    indent = sys.maxsize
     for line in lines[1:]:
         stripped = line.lstrip()
         if stripped:
             indent = min(indent, len(line) - len(stripped))
     # Remove indentation (first line is special):
     trimmed = [lines[0].strip()]
-    if indent < sys.maxint:
+    if indent < sys.maxsize:
         for line in lines[1:]:
             trimmed.append(line[indent:].rstrip())
     # Strip off trailing and leading blank lines:
@@ -210,7 +217,7 @@ def trim(docstring):
         trimmed.pop(0)
     # Return a single string:
     res = '\n'.join(trimmed)
-    if not isinstance(res, unicode):
+    if not PY3 and not isinstance(res, unicode):
         res = res.decode('utf8')
     return res
 

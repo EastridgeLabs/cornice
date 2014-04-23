@@ -18,7 +18,7 @@ from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 logger = logging.getLogger('cornice')
-__version__ = "0.16.2tempfix1"
+__version__ = "0.17"
 
 
 def add_renderer_globals(event):
@@ -36,6 +36,9 @@ def includeme(config):
     """Include the Cornice definitions
     """
     from pyramid.events import BeforeRender, NewRequest
+
+    # attributes required to maintain services
+    config.registry.cornice_services = {}
 
     #config.add_directive('add_apidoc', add_apidoc)
     config.add_directive('add_cornice_service', register_service_views)
